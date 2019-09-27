@@ -1,6 +1,34 @@
 #!/bin/sh
 
-borg init -e none /backups
+if [ -n "$SSH_KEY" ]
+then
+      echo $SSH_KEY > $HOME/.ssh/id_rsa
+      chmod 400 $HOME/.ssh/id_rsa
+      cat <<EOF > $HOME/.ssh/config
+Host $SSH_HOST
+    User root
+    IdentityFile $HOME/.ssh/id_rsa
+    PreferredAuthentications publickey
+EOF
+fi
+
+if [ -n "$SSH_REPO" ]
+then
+      REPO=$SSH_REPO
+      ssh-keyscan -t ecdsa $SSH_HOST > $HOME/.ssh/known_hosts
+      cat <<EOF > $HOME/.ssh/config
+Host $SSH_HOST
+    User root
+    IdentityFile $HOME/.ssh/id_rsa
+    PreferredAuthentications publickey
+EOF
+else
+      REPO=/backups
+fi
+
+echo "Using repo ${REPO}"
+
+borg init -e none $REPO
 
 cat <<EOF  | crontab -
 ${CRON_TIME:-0 0 * * *} borgmatic -v 1 2>&1
@@ -18,7 +46,7 @@ location:
     - /var/backups/
         
   repositories:
-    - /backups
+    - ${REPO}
   
 retention:
   keep_daily: ${KEEP_DAILY:-7}

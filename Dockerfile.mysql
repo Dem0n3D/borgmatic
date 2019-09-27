@@ -4,6 +4,7 @@ RUN apk add --no-cache mariadb-client
 
 RUN mkdir /etc/borgmatic.d/
 RUN mkdir /var/backups/
+RUN mkdir ~/.ssh
 
 VOLUME /backups
 
