@@ -1,6 +1,6 @@
 FROM coaxial/borgmatic
 
-RUN apk add --no-cache postgresql-client
+RUN apk add --no-cache mariadb-client postgresql-client
 
 RUN mkdir /etc/borgmatic.d/
 RUN mkdir /var/backups/
@@ -12,4 +12,4 @@ ENV BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK yes
 
 COPY entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT /entrypoint.sh POSTGRESQL
+ENTRYPOINT ["/entrypoint.sh"]

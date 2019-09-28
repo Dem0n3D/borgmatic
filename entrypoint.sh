@@ -2,45 +2,46 @@
 
 if [ -n "$SSH_KEY" ]
 then
-      echo $SSH_KEY > $HOME/.ssh/id_rsa
-      chmod 400 $HOME/.ssh/id_rsa
-      cat <<EOF > $HOME/.ssh/config
-Host $SSH_HOST
-    User root
-    IdentityFile $HOME/.ssh/id_rsa
-    PreferredAuthentications publickey
-EOF
+  echo $SSH_KEY > $HOME/.ssh/id_rsa
+  chmod 400 $HOME/.ssh/id_rsa
 fi
 
 if [ -n "$SSH_REPO" ]
 then
-      REPO=$SSH_REPO
-      ssh-keyscan -t ecdsa $SSH_HOST > $HOME/.ssh/known_hosts
-      cat <<EOF > $HOME/.ssh/config
+  REPO=$SSH_REPO
+  ssh-keyscan -t ecdsa $SSH_HOST > $HOME/.ssh/known_hosts
+  cat <<EOF > $HOME/.ssh/config
 Host $SSH_HOST
     User root
     IdentityFile $HOME/.ssh/id_rsa
     PreferredAuthentications publickey
+    ConnectTimeout 30
 EOF
 else
-      REPO=/backups
+  REPO=/backups
 fi
 
 echo "Using repo ${REPO}"
 
 borg init -e none $REPO
 
-cat <<EOF  | crontab -
+cat <<EOF | crontab -
 ${CRON_TIME:-0 0 * * *} borgmatic -v 1 2>&1
 EOF
 
-case "$1" in
- "POSTGRESQL") before_backup="PGPASSWORD=$POSTGRES_PASSWORD pg_dump ${POSTGRES_DATABASE:-$POSTGRES_USER} -h $DB_SERVER_HOST -U $POSTGRES_USER > /var/backups/dump.sql" ;;
- "MYSQL") before_backup="mysqldump ${MYSQL_DATABASE:-$MYSQL_USER} -h $DB_SERVER_HOST -u $MYSQL_USER -p$MYSQL_PASSWORD > /var/backups/dump.sql" ;;
- *) exit 1 ;;
+case $DB_TYPE in
+"POSTGRESQL")
+  BEFORE_BACKUP="PGPASSWORD=$POSTGRES_PASSWORD pg_dump ${POSTGRES_DATABASE:-$POSTGRES_USER} -h $DB_SERVER_HOST -U $POSTGRES_USER > /var/backups/dump.sql"
+  ;;
+"MYSQL")
+  BEFORE_BACKUP="mysqldump ${MYSQL_DATABASE:-$MYSQL_USER} -h $DB_SERVER_HOST -u $MYSQL_USER -p$MYSQL_PASSWORD > /var/backups/dump.sql"
+  ;;
+*)
+  BEFORE_BACKUP=""
+  ;;
 esac
 
-cat <<EOF > /etc/borgmatic.d/backup.yaml
+cat <<EOF >/etc/borgmatic.d/backup.yaml
 location:
   source_directories:
     - /var/backups/
@@ -61,9 +62,9 @@ consistency:
 
 hooks:
   before_backup:
-    - $before_backup
+    - ${BEFORE_BACKUP}
   after_backup:
-    - rm /var/backups/dump.sql
+    - rm -f /var/backups/dump.sql
 EOF
 
 crond -f -L /dev/stdout
