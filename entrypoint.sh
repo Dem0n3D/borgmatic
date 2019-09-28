@@ -1,5 +1,7 @@
 #!/bin/sh
 
+IFS=';'
+
 if [ -n "$SSH_KEY" ]
 then
   echo $SSH_KEY > $HOME/.ssh/id_rsa
@@ -32,20 +34,21 @@ EOF
 case $DB_TYPE in
 "POSTGRESQL")
   BEFORE_BACKUP="PGPASSWORD=$POSTGRES_PASSWORD pg_dump ${POSTGRES_DATABASE:-$POSTGRES_USER} -h $DB_SERVER_HOST -U $POSTGRES_USER > /var/backups/dump.sql"
+  BACKUP_LOCATIONS="/var/backups/dump.sql;$BACKUP_LOCATIONS"
   ;;
 "MYSQL")
   BEFORE_BACKUP="mysqldump ${MYSQL_DATABASE:-$MYSQL_USER} -h $DB_SERVER_HOST -u $MYSQL_USER -p$MYSQL_PASSWORD > /var/backups/dump.sql"
+  BACKUP_LOCATIONS="/var/backups/dump.sql;$BACKUP_LOCATIONS"
   ;;
 *)
-  BEFORE_BACKUP=""
   ;;
 esac
 
 cat <<EOF >/etc/borgmatic.d/backup.yaml
 location:
   source_directories:
-    - /var/backups/
-        
+$(for dir in $BACKUP_LOCATIONS; do printf "    - %s\n" "$dir"; done)
+
   repositories:
     - ${REPO}
   
@@ -61,8 +64,8 @@ consistency:
     - archives
 
 hooks:
-  before_backup:
-    - ${BEFORE_BACKUP}
+$([ -n "$BEFORE_BACKUP" ] && echo "  before_backup:")
+$(for bb in $BEFORE_BACKUP; do printf "    - %s\n" "$bb"; done)
   after_backup:
     - rm -f /var/backups/dump.sql
 EOF
