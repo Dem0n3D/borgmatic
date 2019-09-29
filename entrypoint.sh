@@ -23,10 +23,6 @@ else
   REPO=/backups
 fi
 
-echo "Using repo ${REPO}"
-
-borg init -e "${ENCRYPTION_MODE:-none}" "$REPO"
-
 cat <<EOF | crontab -
 ${CRON_TIME:-0 0 * * *} borgmatic -v 1 >/var/backups/borg.log 2>&1
 EOF
@@ -64,6 +60,7 @@ FromLineOverride=YES
 EOF
 SUBJECT_SUCCESS="Borg Backup OK for ${BORG_ARCHIVE_NAME:-$HOSTNAME}"
 SUBJECT_ERROR="Borg Backup FAIL for ${BORG_ARCHIVE_NAME:-$HOSTNAME}"
+SUBJECT_KEY="Borg keyfile for ${BORG_ARCHIVE_NAME:-$HOSTNAME}"
 fi
 
 cat <<EOF >/etc/borgmatic.d/backup.yaml
@@ -95,10 +92,17 @@ $([ -n "$BEFORE_BACKUP" ] && echo "  before_backup:")
 $(for bb in $BEFORE_BACKUP; do printf "    - %s\n" "$bb"; done)
   after_backup:
     - rm -f /var/backups/dump.sql
-$([ -n "$MAIL_ADDRESS_TO" ] && printf "    - '(printf \"From: %s\\\r\\\nSubject: %s\\\r\\\n\\\r\\\n\"; tail -n 200 /var/backups/borg.log) | ssmtp -v %s'" "$MAIL_FROM" "$SUBJECT_SUCCESS" "$MAIL_ADDRESS_TO")
+$([ -n "$MAIL_ADDRESS_TO" ] && printf "    - '(printf \"From: %s\\\r\\\nSubject: %s\\\r\\\n\\\r\\\n\"; tail -n 200 /var/backups/borg.log) | ssmtp %s'" "$MAIL_FROM" "$SUBJECT_SUCCESS" "$MAIL_ADDRESS_TO")
 $([ -n "$MAIL_ADDRESS_TO" ] && printf "  on_error:")
-$([ -n "$MAIL_ADDRESS_TO" ] && printf "    - '(printf \"From: %s\\\r\\\nSubject: %s\\\r\\\n\\\r\\\n\"; tail -n 200 /var/backups/borg.log) | ssmtp -v %s'" "$MAIL_FROM" "$SUBJECT_ERROR" "$MAIL_ADDRESS_TO")
+$([ -n "$MAIL_ADDRESS_TO" ] && printf "    - '(printf \"From: %s\\\r\\\nSubject: %s\\\r\\\n\\\r\\\n\"; tail -n 200 /var/backups/borg.log) | ssmtp %s'" "$MAIL_FROM" "$SUBJECT_ERROR" "$MAIL_ADDRESS_TO")
 EOF
+
+echo "Using repo ${REPO}"
+
+if borg init -e "${ENCRYPTION_MODE:-none}" "$REPO" && [ -n "$MAIL_ADDRESS_TO" ] && [ "${ENCRYPTION_MODE:-none}" != "none" ] && [ "${SEND_ENCRYPTION_KEY:-no}" != "no" ]
+then
+  (printf "From: %s\r\nSubject: %s\r\n\r\n" "$MAIL_FROM" "$SUBJECT_KEY"; borg key export --paper $REPO) | ssmtp "$MAIL_ADDRESS_TO"
+fi
 
 cat /etc/borgmatic.d/backup.yaml
 
