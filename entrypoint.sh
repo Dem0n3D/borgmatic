@@ -25,7 +25,7 @@ fi
 
 echo "Using repo ${REPO}"
 
-borg init -e none $REPO
+borg init -e "${ENCRYPTION_MODE:-none}" "$REPO"
 
 cat <<EOF | crontab -
 ${CRON_TIME:-0 0 * * *} borgmatic -v 1 2>&1

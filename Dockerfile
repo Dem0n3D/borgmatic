@@ -12,8 +12,6 @@ RUN mkdir ~/.ssh
 
 VOLUME /backups
 
-ENV BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK yes
-
 COPY entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
