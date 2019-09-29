@@ -1,6 +1,6 @@
 FROM alpine:3.10
 
-RUN apk --no-cache add borgbackup openssh-client mariadb-client postgresql-client
+RUN apk --no-cache add borgbackup openssh-client mariadb-client postgresql-client ssmtp
 
 ARG BORGMATIC_VERSION=1.2.*
 

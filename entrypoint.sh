@@ -28,7 +28,7 @@ echo "Using repo ${REPO}"
 borg init -e "${ENCRYPTION_MODE:-none}" "$REPO"
 
 cat <<EOF | crontab -
-${CRON_TIME:-0 0 * * *} borgmatic -v 1 2>&1
+${CRON_TIME:-0 0 * * *} borgmatic -v 1 >/var/backups/borg.log 2>&1
 EOF
 
 case $DB_TYPE in
@@ -55,6 +55,16 @@ case $DB_TYPE in
 esac
 
 HOSTNAME="{hostname}"
+
+if [ -n "$MAIL_ADDRESS_TO" ]
+then
+  cat > /etc/ssmtp/ssmtp.conf << EOF
+mailhub=$MAIL_SMTP_SERVER
+FromLineOverride=YES
+EOF
+SUBJECT_SUCCESS="Borg Backup OK for ${BORG_ARCHIVE_NAME:-$HOSTNAME}"
+SUBJECT_ERROR="Borg Backup FAIL for ${BORG_ARCHIVE_NAME:-$HOSTNAME}"
+fi
 
 cat <<EOF >/etc/borgmatic.d/backup.yaml
 location:
@@ -85,6 +95,9 @@ $([ -n "$BEFORE_BACKUP" ] && echo "  before_backup:")
 $(for bb in $BEFORE_BACKUP; do printf "    - %s\n" "$bb"; done)
   after_backup:
     - rm -f /var/backups/dump.sql
+$([ -n "$MAIL_ADDRESS_TO" ] && printf "    - '(printf \"From: %s\\\r\\\nSubject: %s\\\r\\\n\\\r\\\n\"; tail -n 200 /var/backups/borg.log) | ssmtp -v %s'" "$MAIL_FROM" "$SUBJECT_SUCCESS" "$MAIL_ADDRESS_TO")
+$([ -n "$MAIL_ADDRESS_TO" ] && printf "  on_error:")
+$([ -n "$MAIL_ADDRESS_TO" ] && printf "    - '(printf \"From: %s\\\r\\\nSubject: %s\\\r\\\n\\\r\\\n\"; tail -n 200 /var/backups/borg.log) | ssmtp -v %s'" "$MAIL_FROM" "$SUBJECT_ERROR" "$MAIL_ADDRESS_TO")
 EOF
 
 cat /etc/borgmatic.d/backup.yaml
