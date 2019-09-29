@@ -54,6 +54,8 @@ case $DB_TYPE in
   ;;
 esac
 
+HOSTNAME="{hostname}"
+
 cat <<EOF >/etc/borgmatic.d/backup.yaml
 location:
   source_directories:
@@ -61,17 +63,22 @@ $(for dir in $BACKUP_LOCATIONS; do printf "    - %s\n" "$dir"; done)
 
   repositories:
     - ${REPO}
-  
+
+storage:
+  archive_name_format: '${BORG_ARCHIVE_NAME:-$HOSTNAME}${BORG_ARCHIVE_POSTFIX:--{now:%Y-%m-%dT%H:%M:%S.%f}}'
+
 retention:
   keep_daily: ${KEEP_DAILY:-7}
   keep_weekly: ${KEEP_WEEKLY:-4}
   keep_monthly: ${KEEP_MONTHLY:-12}
   keep_yearly: ${KEEP_YEARLY:-4}
+  prefix: '${BORG_ARCHIVE_NAME:-$HOSTNAME-}'
 
 consistency:
   checks:
     - repository
     - archives
+  prefix: '${BORG_ARCHIVE_NAME:-$HOSTNAME-}'
 
 hooks:
 $([ -n "$BEFORE_BACKUP" ] && echo "  before_backup:")
