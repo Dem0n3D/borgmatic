@@ -73,6 +73,7 @@ $(for dir in $BACKUP_LOCATIONS; do printf "    - %s\n" "$dir"; done)
 
 storage:
   archive_name_format: '${BORG_ARCHIVE_NAME:-$HOSTNAME}${BORG_ARCHIVE_POSTFIX:--{now:%Y-%m-%dT%H:%M:%S.%f}}'
+  lock_wait: ${LOCK_WAIT:-1}
 
 retention:
   keep_daily: ${KEEP_DAILY:-7}
