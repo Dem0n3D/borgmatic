@@ -11,10 +11,10 @@ fi
 if [ -n "$SSH_REPO" ]
 then
   REPO=$SSH_REPO
-  ssh-keyscan -t ecdsa $SSH_HOST > $HOME/.ssh/known_hosts
+  ssh-keyscan -t ${SSH_KEY_ALGORITHM:-ecdsa} $SSH_HOST > $HOME/.ssh/known_hosts
   cat <<EOF > $HOME/.ssh/config
 Host $SSH_HOST
-    User root
+    User ${SSH_USER:-root}
     IdentityFile $HOME/.ssh/id_rsa
     PreferredAuthentications publickey
     ConnectTimeout 30
