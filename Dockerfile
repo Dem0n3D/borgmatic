@@ -2,7 +2,7 @@ FROM alpine:3.11
 
 RUN apk --no-cache add borgbackup openssh-client mariadb-client postgresql-client ssmtp
 
-ARG BORGMATIC_VERSION=1.2.*
+ARG BORGMATIC_VERSION=1.5.12
 
 RUN pip3 install --no-cache-dir borgmatic==$BORGMATIC_VERSION
 
