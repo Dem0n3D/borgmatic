@@ -1,4 +1,4 @@
-FROM alpine:3.11
+FROM alpine:3.13
 
 RUN apk --no-cache add borgbackup openssh-client mariadb-client postgresql-client ssmtp
 
