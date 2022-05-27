@@ -12,6 +12,9 @@ if [ -n "$SSH_REPO" ]
 then
   REPO=$SSH_REPO
   ssh-keyscan -t ${SSH_KEY_ALGORITHM:-ecdsa} $SSH_HOST > $HOME/.ssh/known_hosts
+  if [ ! -s $HOME/.ssh/known_hosts ]; then
+    exit 1
+  fi
   cat <<EOF > $HOME/.ssh/config
 Host $SSH_HOST
     User ${SSH_USER:-root}
