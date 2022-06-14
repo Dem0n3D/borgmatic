@@ -74,8 +74,8 @@ $(for dir in $BACKUP_LOCATIONS; do printf "    - %s\n" "$dir"; done)
   repositories:
     - ${REPO}
 
-$([ -n "$EXCLUDE_PATTERNS" ] && echo "exclude_patterns:")
-$(for ep in $EXCLUDE_PATTERNS; do printf "  - %s\n" "$ep"; done)
+$([ -n "$EXCLUDE_PATTERNS" ] && echo "  exclude_patterns:")
+$(for ep in $EXCLUDE_PATTERNS; do printf "    - %s\n" "$ep"; done)
 
 storage:
   archive_name_format: '${BORG_ARCHIVE_NAME:-$HOSTNAME}${BORG_ARCHIVE_POSTFIX:--{now:%Y-%m-%dT%H:%M:%S.%f}}'
