@@ -92,7 +92,7 @@ consistency:
   prefix: '${BORG_ARCHIVE_NAME:-$HOSTNAME-}'
 
 hooks:
-echo "  before_backup:"
+  before_backup:
     - true
 $(for bb in $BEFORE_BACKUP; do printf "    - %s\n" "$bb"; done)
   after_backup:
