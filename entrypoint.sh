@@ -96,11 +96,11 @@ consistency:
 
 hooks:
   before_backup:
-    - true
-$(for bb in $BEFORE_BACKUP; do printf "    - %s\n" "$bb"; done)
+    - 'true'
+$(for bb in $BEFORE_BACKUP; do printf "    - '%s'\n" "$bb"; done)
   after_backup:
-    - true
-$(for ab in $AFTER_BACKUP; do printf "    - %s\n" "$ab"; done)
+    - 'true'
+$(for ab in $AFTER_BACKUP; do printf "    - '%s'\n" "$ab"; done)
 $([ -n "$MAIL_ADDRESS_TO" ] && printf "    - '(printf \"From: %s\\\r\\\nSubject: %s\\\r\\\n\\\r\\\n\"; tail -n 200 /var/backups/borg.log) | ssmtp %s'" "$MAIL_FROM" "$SUBJECT_SUCCESS" "$MAIL_ADDRESS_TO")
 $([ -n "$MAIL_ADDRESS_TO" ] && printf "  on_error:")
 $([ -n "$MAIL_ADDRESS_TO" ] && printf "    - '(printf \"From: %s\\\r\\\nSubject: %s\\\r\\\n\\\r\\\n\"; tail -n 200 /var/backups/borg.log) | ssmtp %s'" "$MAIL_FROM" "$SUBJECT_ERROR" "$MAIL_ADDRESS_TO")
