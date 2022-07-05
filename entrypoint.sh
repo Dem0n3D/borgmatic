@@ -37,8 +37,8 @@ case $DB_TYPE in
     printf "%s:%s:%s:%s:%s\n" "${DB_SERVER_HOST}" "${DB_SERVER_PORT:-5432}" "${POSTGRES_DATABASE:-$POSTGRES_USER}" "$POSTGRES_USER" "$POSTGRES_PASSWORD" > $HOME/.pgpass
     chmod 600 $HOME/.pgpass
   fi
-  BEFORE_BACKUP="pg_dump ${POSTGRES_DATABASE:-$POSTGRES_USER} -h $DB_SERVER_HOST -U $POSTGRES_USER -w > /var/backups/dump.sql"
-  BACKUP_LOCATIONS="/var/backups/dump.sql;$BACKUP_LOCATIONS"
+  BEFORE_BACKUP="pg_dump ${POSTGRES_DATABASE:-$POSTGRES_USER} -h $DB_SERVER_HOST -U $POSTGRES_USER -w ${PGDUMP_ARGS:-> /var/backups/dump.sql}"
+  BACKUP_LOCATIONS="/var/backups/;$BACKUP_LOCATIONS"
   ;;
 "MYSQL")
   if [ -n "$MYSQL_PASSWORD" ]
